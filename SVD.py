@@ -1,20 +1,32 @@
 import numpy as np
 import izgradnjaMatrike as im
 
-st_dokumentov = 10
-
-def singularValueDecomposition(k):
-    dokumenti = im.preberi_dokumente(st_dokumentov)
-    A, besede, ind_besed = im.zgradi_matriko(dokumenti)
-    
-    #dobimo osnoven svd
+"""
+vrne razcep matrike A na U, S in V
+    U - besede v prostoru konceptov
+    S - pomembnost konceptov
+    V(transponirano) - dokumenti v prostoru konceptov (vrstice so teme, stolpci pa dokumenti)
+"""
+def SVD(k, A):
+    #dobimo osnoven svd - 
     u, s, v = np.linalg.svd(A)
 
     #odrezemo na k
     U = u[:, :k]
-    V = v[:k, :]
+    Vt = v[:k, :]
 
     #s je treba malo drugače, ker svd vraca samo vektor s singularnimi vrednostmi
     S = np.diag(s[:k])
+   
+    """
+    print("U: ")
+    print(U)
 
-    return U, S, V
+    print("S: ")
+    print(S)
+
+    print("V: ")
+    print(V)
+    """
+
+    return U, S, Vt

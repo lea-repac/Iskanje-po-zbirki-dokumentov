@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def preberi_dokumente(stevilo_dokumentov):
     dokumenti = []
     
@@ -49,9 +48,9 @@ def zgradi_matriko(dokumenti):
 
 
 # preberi dokumente
-dokumenti = preberi_dokumente(10)
+#dokumenti = preberi_dokumente(10)
 #važno samo da dobimo A, ampak za testiranje sem dala še besede in indeks besede
-A, besede, indeks_besed = zgradi_matriko(dokumenti)
+#A, besede, indeks_besed = zgradi_matriko(dokumenti)
 
 """
 #ta izpis je samo za preverjanje, da je vse delovalo pravilno
@@ -67,5 +66,4 @@ print(A)
 print("\nFrekvence po besedah:")
 for i, beseda in enumerate(besede):
     print(beseda, A[i])
-
 """
