@@ -69,3 +69,55 @@ for i, beseda in enumerate(besede):
     print(beseda, A[i])
 
 """
+
+
+def zgradi_matriko_utezeno(dokumenti):
+    """
+    4. točka:
+    a_ij = L_ij * G_i
+    L_ij = log(f_ij + 1) #kako pomembna je beseda v tem dokumnetu
+    G_i = 1 - sum_j(p_ij log(p_ij)) / log(n) #kako pomembna je beseda v vseh dokumentih
+    p_ij = f_ij / gf_i
+    """
+    F, vse_besede, indeks_besed = zgradi_matriko(dokumenti)
+
+    m, n = F.shape  # m = št. besed, n = št. dokumentov F.shape=(število_vrstic, število_stolpcev)
+
+
+    L = np.log(F + 1.0)
+
+    # globalna frekvenca posamezne besede čez vse dokumente
+    gf = np.sum(F, axis=1)  # shape (m,) #za vsako besedo (vrstico) seštej vse stolpce
+
+    G = np.zeros(m, dtype=float)
+
+    if n == 1:
+        # da se izognemo deljenju z log(1)=0
+        G[:] = 1.0
+    else:
+        for i in range(m):
+            if gf[i] == 0:
+                G[i] = 0.0
+                continue
+
+            p = F[i, :] / gf[i]      # p_ij za fiksno besedo i (frekvenca besede deljeno s kolikokrat se pojavi vseh dokumentih)
+            p_nonzero = p[p > 0]     # 0 * log(0) obravnavamo kot 0 ker log(0) ne obstaja
+
+            entropija = -np.sum(p_nonzero * np.log(p_nonzero)) / np.log(n)
+            G[i] = 1.0 - entropija
+
+    # vsako vrstico L pomnožimo z ustreznim G_i
+    A_utezena = L * G[:, np.newaxis]
+
+    return A_utezena, vse_besede, indeks_besed
+
+
+def vrni_besede(stevilo_dokumentov=10, utezena=True):
+    dokumenti = preberi_dokumente(stevilo_dokumentov)
+
+    if utezena:
+        _, besede, _ = zgradi_matriko_utezeno(dokumenti)
+    else:
+        _, besede, _ = zgradi_matriko(dokumenti)
+
+    return besede
