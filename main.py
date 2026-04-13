@@ -10,7 +10,7 @@ def main():
     mejna_vrednost = float(input("Vnesite mejno vrednost kosinusa: "))
     
     dokumenti = im.preberi_dokumente(stevilo_dokumentov)
-    A, vse_besede, indeks_besed = im.zgradi_matriko(dokumenti)
+    A, vse_besede, indeks_besed = im.zgradi_matriko_utezeno(dokumenti)
 
     U, S, Vt = SVD.SVD(k, A)
 
@@ -28,6 +28,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 
