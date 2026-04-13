@@ -2,7 +2,12 @@
 Repozitorij vsebuje dokumente in programe, ki so potrebni za iskalnik po zbirki dokumentov, ki je nastajal v okviru projekta pri predmetu Matematično modeliranje (UL FRI - uni, 2. letnik). 
 
 ## Vsebina
-Trenutno je v repozitoriju le branch main, ki vsebuje 10 dokumentov s tekstovno vsebino.
+1. Dokumenti: v rpozitoriju je zbirka desetih dokumentov s kratko vsebino.
+2. `izdelavaMatrike.py`: Program izdela matriko besed po dokumentih po 4. točki, torej z uporabo lokalnih in globalnih mer pomembnosti besede.
+3. `SVD.py`: Program izračuna SVD razcep matrike, ki jo izdela program `izdelavaMatrike.py`. Vsebuje funkcijo `SVD(k, A)`, ki sprejme mero $k$, ki nam pove, koliko največjih singularnih vrednosti naj obrdžimo in matriko $A$, vrne pa matrike $U$, $S$ in $V^{T}$.
+4. `Q.py`: Program po 3. točki zgradi vektor dokumentov $q$ (oz. vektor v prostoru dokumentov). Vsebuje tudi funkciji `kosinus(a, b)`, ki izračuna kosinus kota med dvema vektorjema in funkcijo `najdiDokumente(q, V, mejna_vrednost)`, ki na podlagi izračunanih kosinusov in določene mejne vrednosti vrne števila dokumentov, ki so za vnešeni iskalni niz najrelevantnejši.
+5. `main.py`: Povezuje vse ostale programe in jih izvede. Prebere vhodne podatke: število dokumentov, $k$ in mejno vrednost kosinusa. Najprej kliče funkcije iz `izdelavaMatrike.py` in zgradi matriko besed po dokumentih. Potem kliče funkcijo `SVD(k, A)` in `SVD.py` ter izračuna SVD razcep. Vpraša po iskalnem nizu in si ga shrani v vektor poizvedbe, ki ga potem uporabi pri gradnji vektorja dokumentov z funkcijo `zgradiVektorDokumentov(q, U, S)` iz `Q.py`. Transponira $V^{T}$, izračuna kosinuse med vektorjem dokumentov in stolpci $V$ ter vrne števila dokumentov, katerih kosinusi so večji od mejne vrednosti.
+
 
 ## Projekt
 Izdelujemo iskalnik relevantnih dokumentov po ključnih besedah z uporabo metode **latentnega semantičnega indeksiranja** ali **LSI**. 
