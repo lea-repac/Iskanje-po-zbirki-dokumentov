@@ -49,9 +49,9 @@ def zgradi_matriko(dokumenti):
 
 
 # preberi dokumente
-dokumenti = preberi_dokumente(10)
+#dokumenti = preberi_dokumente(10)
 #važno samo da dobimo A, ampak za testiranje sem dala še besede in indeks besede
-A, besede, indeks_besed = zgradi_matriko(dokumenti)
+#A, besede, indeks_besed = zgradi_matriko(dokumenti)
 
 """
 #ta izpis je samo za preverjanje, da je vse delovalo pravilno
@@ -83,7 +83,6 @@ def zgradi_matriko_utezeno(dokumenti):
 
     m, n = F.shape  # m = št. besed, n = št. dokumentov F.shape=(število_vrstic, število_stolpcev)
 
-
     L = np.log(F + 1.0)
 
     # globalna frekvenca posamezne besede čez vse dokumente
@@ -109,10 +108,10 @@ def zgradi_matriko_utezeno(dokumenti):
     # vsako vrstico L pomnožimo z ustreznim G_i
     A_utezena = L * G[:, np.newaxis]
 
-    return A_utezena, vse_besede, indeks_besed
+    return A_utezena, vse_besede, indeks_besed, G
 
 
-def vrni_besede(stevilo_dokumentov=10, utezena=True):
+#def vrni_besede(stevilo_dokumentov=10, utezena=True):
     dokumenti = preberi_dokumente(stevilo_dokumentov)
 
     if utezena:

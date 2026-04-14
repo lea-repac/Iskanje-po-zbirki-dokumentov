@@ -1,26 +1,28 @@
 import numpy as np
-import SVD as svd
-import izgradnjaMatrike as im
 
 """
-vrne poizvedbo zapisano brez locil v vektorju q (transponirana oblika)
+vrne poizvedbo zapisano v vektroju frekvenc - vse besede iz zbirke imajo frekvence v poizvedbi
 """
-def zgradiVektorPoizvedbe(query, B):
+def zgradiVektorPoizvedbe(query, slovar, utezeno, G):
     query = query.lower()
-    query = query.replace(".", "")
-    query = query.replace(",", "")
-    query = query.replace("?", "")
-    query = query.replace("!", "")
+    for char in ".,!?;:":
+        query = query.replace(char, "")
     query = query.split()
 
-    q = np.zeros(len(B))
-    counter = 0
-    for i in range(len(B)):
-        if B[i] == query[counter]:
-            q[i] += 1
-            counter += 1
-            if counter == len(query):
-                break
+    q = np.zeros(len(slovar))
+    
+    for word in query:
+        if word in slovar:
+            indeks = slovar.get(word)
+            q[indeks] += 1
+    
+    if not utezeno:
+        return q
+
+    #ce je utezeno, vrne drugacen vektor
+    f_q = q
+    L_q = np.log(f_q + 1.0)
+    q = L_q * G
 
     return q
 
