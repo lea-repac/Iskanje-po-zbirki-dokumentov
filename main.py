@@ -5,16 +5,11 @@ import izgradnjaMatrike as im
 import svd
 import Q
 
-def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa):
-    stevilo_dokumentov = len(list(Path('.').glob("*.txt")))
+def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez):
     dokumenti = im.preberi_dokumente(Path(mapa))
-    #odlocimo se, ce zelimo utezeno ali neutezeno
-
-    odgovor = input("Želite navadne ali utežene frekvence (n/u)? ")
-    utezeno = odgovor.lower() == 'u'
 
     #gradnja matrik
-    if utezeno:
+    if utez:
         A, besede, slovar, G = im.zgradi_matriko_utezeno(dokumenti)
     else:
         A, besede, slovar = im.zgradi_matriko(dokumenti)
@@ -26,7 +21,7 @@ def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa):
         np.save(pot_G, G)
     
     data = {
-        "utezenost" : utezeno,
+        "utezenost" : utez,
         "slovar" : slovar
     }
     with open(pot_podatki, "wb") as f:
@@ -38,27 +33,21 @@ def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa):
     np.save(pot_S, s)
     np.save(pot_Vt, vt)
 
-def beri_podatke(pot_A, pot_G, pot_podatki):
-    with open(pot_podatki, "rb") as f:
-        data = pickle.load(f)
-    
+def beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt):
     A = np.load(pot_A)
     G = None 
     if pot_G.exists():
         G = np.load(pot_G)
-
-    return data["utezenost"], data["slovar"], G, A
-
-def beri_SVD(pot_U, pot_S, pot_Vt):
+    
     U = np.load(pot_U)
     S = np.load(pot_S)
     Vt = np.load(pot_Vt)
-    return U, S, Vt
+
+    return G, A, U, S, Vt
 
 def main():
-    mapa = input("Kje se nahajajo dokumenti (vnesite pot)?")
-    odgovor = input("Ali zelite spremeniti utezenost (d/n)? ")
-    spremembe = odgovor.lower() == 'd'
+    mapa = input("Kje se nahajajo dokumenti (vnesite pot)? ")
+    
 
     #pot do datoteke, ki vsebuje matriko A
     pot_A = Path("A.npy")
@@ -67,13 +56,27 @@ def main():
     pot_S = Path("S.npy")
     pot_Vt = Path("Vt.npy")
     pot_podatki = Path("ostali_podatki.pkl")
+    
+    odgovor = input("Željena uteženost (u/n)? ")
+    utez = odgovor.lower() == 'u'
 
-    if not pot_podatki.exists() or spremembe:
-        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa)
+    if not pot_podatki.exists():
+        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez)
     
-    utezeno, slovar, G, A = beri_podatke(pot_A, pot_G, pot_podatki)
-    u, s, v = beri_SVD(pot_U, pot_S, pot_Vt)
+    with open(pot_podatki, "rb") as f:
+        data = pickle.load(f)
+    utezenost = data["utezenost"]
+    slovar = data["slovar"]
+
+    if utezenost != utez:
+        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez)
+        with open(pot_podatki, "rb") as f:
+            data = pickle.load(f)
+        utezenost = data["utezenost"]
+        slovar = data["slovar"]
     
+    G, A, u, s, v = beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt)
+
     k = int(input("Vnesite vrednost k: "))
     mejna_vrednost = float(input("Vnesite mejno vrednost kosinusa: "))
     
@@ -85,7 +88,7 @@ def main():
 
     poizvedba = input("Vnesite iskalni niz: ")
     
-    q = Q.zgradiVektorPoizvedbe(poizvedba, slovar, utezeno, G)
+    q = Q.zgradiVektorPoizvedbe(poizvedba, slovar, utezenost, G)
     #q = qT Uk S−1    
     q = Q.zgradiVektorDokumentov(q, U, S)
 
