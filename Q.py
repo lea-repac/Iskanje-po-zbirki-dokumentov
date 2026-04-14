@@ -42,8 +42,10 @@ def kosinus(a, b):
     skalar = np.dot(a, b)
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
-
-    kos = skalar / (norm_a * norm_b)
+    if norm_a == 0 or norm_b == 0:
+        kos = 0
+    else:
+        kos = skalar / (norm_a * norm_b)
     return kos
 
 """
