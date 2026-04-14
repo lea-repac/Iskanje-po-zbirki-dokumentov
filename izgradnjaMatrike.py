@@ -1,14 +1,12 @@
 import numpy as np
+from pathlib import Path
+import os
 
-
-def preberi_dokumente(stevilo_dokumentov):
+def preberi_dokumente(pot_do_dokumentov):
     dokumenti = []
     
-    for i in range(1, stevilo_dokumentov + 1):
-        ime_datoteke = f"dokument{i:02d}.txt" #i:02d - i število indeksa, 0 - vodilne ničle, 2 - koliko mest more številka zapolnit
-        
-        with open(ime_datoteke, "r", encoding="utf-8") as f:
-            dokumenti.append(f.read())
+    for datoteka in sorted(pot_do_dokumentov.glob("*.txt")):
+            dokumenti.append(datoteka.read_text(encoding="utf-8"))
     
     return dokumenti
 

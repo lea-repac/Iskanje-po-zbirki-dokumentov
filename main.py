@@ -5,9 +5,9 @@ import izgradnjaMatrike as im
 import svd
 import Q
 
-def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt):
+def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa):
     stevilo_dokumentov = len(list(Path('.').glob("*.txt")))
-    dokumenti = im.preberi_dokumente(stevilo_dokumentov)
+    dokumenti = im.preberi_dokumente(Path(mapa))
     #odlocimo se, ce zelimo utezeno ali neutezeno
 
     odgovor = input("Želite navadne ali utežene frekvence (n/u)? ")
@@ -56,6 +56,10 @@ def beri_SVD(pot_U, pot_S, pot_Vt):
     return U, S, Vt
 
 def main():
+    mapa = input("Kje se nahajajo dokumenti (vnesite pot)?")
+    odgovor = input("Ali zelite spremeniti utezenost (d/n)? ")
+    spremembe = odgovor.lower() == 'd'
+
     #pot do datoteke, ki vsebuje matriko A
     pot_A = Path("A.npy")
     pot_G = Path("G.npy")
@@ -64,8 +68,8 @@ def main():
     pot_Vt = Path("Vt.npy")
     pot_podatki = Path("ostali_podatki.pkl")
 
-    if not pot_podatki.exists():
-        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt)
+    if not pot_podatki.exists() or spremembe:
+        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa)
     
     utezeno, slovar, G, A = beri_podatke(pot_A, pot_G, pot_podatki)
     u, s, v = beri_SVD(pot_U, pot_S, pot_Vt)
@@ -94,6 +98,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
