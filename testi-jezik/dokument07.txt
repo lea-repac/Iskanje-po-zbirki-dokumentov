@@ -1,0 +1,5 @@
+Iskanim dokumentom ustrezajo stolpci Vk, ki so dovolj blizu vektorju ˆq.
+Za razdaljo uporabite kosinus kota med dvema vektorjema in ne Evklidske
+razdalje med njima. Poizvedba naj vrne dokumente, za katere je kosinus
+veˇcji od izbrane mejne vrednosti. Preskusite razliˇcne mejne vrednosti
+kosinusa, pri kateri izberemo dokument (0.9, 0.7, 0.6, ...)

@@ -1,0 +1,8 @@
+Pri Matematičnem modeliranju študenti (relativno) realne probleme rešujejo s pomočjo matematičnih modelov. Študenti se spoznajo s timskim delom in lahko sami, skupaj s kolegi v ekipi (in ob pomoči učiteljske ekipe) izpeljejo projekt od začetka do konca. 
+
+Predmet je razdeljen na tri glavna poglavja:
+
+Linearni modeli: sistemi linearnih enačb, posplošeni inverzi matrik
+Nelinearni modeli: vektorske funkcije vektorske spremenljivke, sistemi nelienarnih enačb, krivulje in ploskve
+Krivulje in ploskve
+Dinamični modeli: diferencialne enačbe in dinamični sistemi 
