@@ -1,0 +1,2 @@
+# Brez dodatnih odvisnosti.
+# Uporablja se samo standardna knjižnica tkinter.
