@@ -4,11 +4,13 @@ import os
 
 def preberi_dokumente(pot_do_dokumentov):
     dokumenti = []
+    imena = []
     
     for datoteka in sorted(pot_do_dokumentov.glob("*.txt")):
             dokumenti.append(datoteka.read_text(encoding="utf-8"))
+            imena.append(datoteka.name)
     
-    return dokumenti
+    return dokumenti, imena
 
 
 def zgradi_matriko(dokumenti):

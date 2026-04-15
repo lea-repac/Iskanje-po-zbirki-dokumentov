@@ -1,12 +1,13 @@
 import numpy as np
 import pickle
+import os
 from pathlib import Path
 import izgradnjaMatrike as im
 import svd
 import Q
 
 def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez):
-    dokumenti = im.preberi_dokumente(Path(mapa))
+    dokumenti, imena = im.preberi_dokumente(Path(mapa))
 
     #gradnja matrik
     if utez:
@@ -22,7 +23,8 @@ def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez):
     
     data = {
         "utezenost" : utez,
-        "slovar" : slovar
+        "slovar" : slovar,
+        "imena_dokumentov" : imena
     }
     with open(pot_podatki, "wb") as f:
         pickle.dump(data, f)
@@ -46,35 +48,44 @@ def beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt):
     return G, A, U, S, Vt
 
 def main():
-    mapa = input("Kje se nahajajo dokumenti (vnesite pot)? ")
-    
+    matrike = Path(input("Kam naj se shranjujejo oz. kje so že shranjene matrike (vnesite pot)? "))
+    mapa = input("Kje se nahaja zbirka dokumentov (vnesite pot)? ")
 
+    #prevri ali obstaja dierkorij matrike, ce ne ga ustvari
+    if not matrike.exists():
+        os.mkdir(matrike)
+    
     #pot do datoteke, ki vsebuje matriko A
-    pot_A = Path("A.npy")
-    pot_G = Path("G.npy")
-    pot_U = Path("U.npy")
-    pot_S = Path("S.npy")
-    pot_Vt = Path("Vt.npy")
-    pot_podatki = Path("ostali_podatki.pkl")
+    pot_A = matrike / "A.npy"
+    pot_G = matrike / "G.npy"
+    pot_U = matrike / "U.npy"
+    pot_S = matrike / "S.npy"
+    pot_Vt = matrike / "Vt.npy"
+    pot_podatki = matrike / "ostali_podatki.pkl"
     
     odgovor = input("Željena uteženost (u/n)? ")
     utez = odgovor.lower() == 'u'
 
+    #ce matrike se niso izracunane, jih izracunamo
     if not pot_podatki.exists():
         shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez)
-    
-    with open(pot_podatki, "rb") as f:
-        data = pickle.load(f)
-    utezenost = data["utezenost"]
-    slovar = data["slovar"]
-
-    if utezenost != utez:
-        shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez)
+    else:
+    #preveri ali je utezenost enaka kot je ze izbrana (samo v primeru, da matrike ze obstajajo)
         with open(pot_podatki, "rb") as f:
             data = pickle.load(f)
         utezenost = data["utezenost"]
         slovar = data["slovar"]
+        #ce je utezenost razlicna, naredi nove matrike
+        if utezenost != utez:
+            shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez)
     
+    #preberi podatke
+    with open(pot_podatki, "rb") as f:
+            data = pickle.load(f)
+    utezenost = data["utezenost"]
+    slovar = data["slovar"]
+    imena_dokumentov = data["imena_dokumentov"]
+    #preberi matrike
     G, A, u, s, v = beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt)
 
     k = int(input("Vnesite vrednost k: "))
@@ -95,9 +106,10 @@ def main():
     V = np.transpose(Vt)
 
     iskani = Q.najdiDokumente(q, V, mejna_vrednost)
-    print("Najbolj relevantni dokumenti so: ")
-    for i in range(len(iskani)): 
-        print(iskani[i])
+    if len(iskani) != 0:
+        print("Najbolj relevantni dokumenti so: ")
+        for i in range(len(iskani)):
+            print(imena_dokumentov[iskani[i]])
 
 if __name__ == "__main__":
     main()

@@ -63,6 +63,6 @@ def najdiDokumente(q, V, mejna_vrednost):
     iskani = []
     for i in range(len(kosinusi)):
         if kosinusi[i] > mejna_vrednost:
-            iskani.append(i + 1)
+            iskani.append(i)
 
     return iskani
