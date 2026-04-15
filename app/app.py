@@ -15,20 +15,15 @@ class DocumentSearchApp:
         self.root.minsize(900, 680)
 
         self.folder_path: str = ""
+        self.save_folder_var = tk.StringVar()
 
         self.weighted_var = tk.BooleanVar(value=True)
-        self.has_existing_matrices_var = tk.BooleanVar(value=False)
 
         self.k_var = tk.StringVar(value="2")
         self.cosine_var = tk.StringVar(value="0.1")
         self.query_var = tk.StringVar()
 
-        self.matrix_a_var = tk.StringVar()
-        self.matrix_s_var = tk.StringVar()
-        self.matrix_g_var = tk.StringVar()
-
         self._build_ui()
-        self._toggle_matrix_fields()
 
     def _build_ui(self) -> None:
         outer = ttk.Frame(self.root, padding=16)
@@ -43,7 +38,7 @@ class DocumentSearchApp:
 
         subtitle = ttk.Label(
             outer,
-            text="Izberi mapo z .txt dokumenti, nastavi parametre in zaženi iskanje.",
+            text="Izberi mapo z .txt dokumenti, mapo za shranjevanje matrik in zaženi iskanje.",
         )
         subtitle.pack(anchor="w", pady=(4, 14))
 
@@ -82,22 +77,12 @@ class DocumentSearchApp:
             value=False,
         ).pack(side="left", padx=(12, 0))
 
-        existing_frame = ttk.Frame(options_frame)
-        existing_frame.pack(fill="x")
+        save_frame = ttk.Frame(options_frame)
+        save_frame.pack(fill="x", pady=(6, 0))
 
-        ttk.Checkbutton(
-            existing_frame,
-            text="Matrike A, S in G že obstajajo (zaenkrat se ignorira)",
-            variable=self.has_existing_matrices_var,
-            command=self._toggle_matrix_fields,
-        ).pack(anchor="w")
-
-        self.matrices_frame = ttk.Frame(options_frame)
-        self.matrices_frame.pack(fill="x", pady=(10, 0))
-
-        self._build_matrix_row(self.matrices_frame, "Matrika A:", self.matrix_a_var)
-        self._build_matrix_row(self.matrices_frame, "Matrika S:", self.matrix_s_var)
-        self._build_matrix_row(self.matrices_frame, "Matrika G:", self.matrix_g_var)
+        ttk.Label(save_frame, text="Mapa za shranjevanje matrik:", width=26).pack(side="left")
+        ttk.Entry(save_frame, textvariable=self.save_folder_var).pack(side="left", fill="x", expand=True)
+        ttk.Button(save_frame, text="Prebrskaj", command=self._pick_save_folder).pack(side="left", padx=(8, 0))
 
         params_frame = ttk.LabelFrame(outer, text="3. Parametri iskanja", padding=12)
         params_frame.pack(fill="x", pady=(0, 12))
@@ -125,18 +110,6 @@ class DocumentSearchApp:
         self.output = tk.Text(results_frame, wrap="word", height=18)
         self.output.pack(fill="both", expand=True)
 
-    def _build_matrix_row(self, parent: ttk.Frame, label: str, variable: tk.StringVar) -> None:
-        row = ttk.Frame(parent)
-        row.pack(fill="x", pady=4)
-        ttk.Label(row, text=label, width=18).pack(side="left")
-        ttk.Entry(row, textvariable=variable).pack(side="left", fill="x", expand=True)
-        ttk.Button(row, text="Prebrskaj", command=lambda v=variable: self._pick_file(v)).pack(side="left", padx=(8, 0))
-
-    def _pick_file(self, variable: tk.StringVar) -> None:
-        path = filedialog.askopenfilename()
-        if path:
-            variable.set(path)
-
     def _add_folder(self) -> None:
         folder = filedialog.askdirectory()
         if not folder:
@@ -159,18 +132,10 @@ class DocumentSearchApp:
         self.folder_label.config(text="Ni izbrane mape.")
         self.docs_list.delete(0, tk.END)
 
-    def _toggle_matrix_fields(self) -> None:
-        state = "disabled"
-        for child in self.matrices_frame.winfo_children():
-            self._set_widget_state_recursive(child, state)
-
-    def _set_widget_state_recursive(self, widget: tk.Widget, state: str) -> None:
-        try:
-            widget.configure(state=state)
-        except tk.TclError:
-            pass
-        for child in widget.winfo_children():
-            self._set_widget_state_recursive(child, state)
+    def _pick_save_folder(self) -> None:
+        folder = filedialog.askdirectory()
+        if folder:
+            self.save_folder_var.set(folder)
 
     def _validate(self) -> bool:
         if not self.folder_path:
@@ -180,6 +145,17 @@ class DocumentSearchApp:
         txt_files = list(Path(self.folder_path).glob("*.txt"))
         if not txt_files:
             messagebox.showerror("Napaka", "V izbrani mapi ni .txt dokumentov.")
+            return False
+
+        if not self.save_folder_var.get().strip():
+            messagebox.showerror("Napaka", "Izberi mapo za shranjevanje matrik.")
+            return False
+
+        try:
+            save_path = Path(self.save_folder_var.get().strip())
+            save_path.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            messagebox.showerror("Napaka", "Mapa za shranjevanje matrik ni veljavna.")
             return False
 
         try:
@@ -215,13 +191,8 @@ class DocumentSearchApp:
         try:
             result = run_search(
                 folder_path=self.folder_path,
+                save_folder=self.save_folder_var.get().strip(),
                 weighted=self.weighted_var.get(),
-                has_existing_matrices=self.has_existing_matrices_var.get(),
-                matrix_paths={
-                    "A": self.matrix_a_var.get().strip(),
-                    "S": self.matrix_s_var.get().strip(),
-                    "G": self.matrix_g_var.get().strip(),
-                },
                 k=int(self.k_var.get()),
                 cosine_threshold=float(self.cosine_var.get()),
                 query=self.query_var.get().strip(),
@@ -229,6 +200,13 @@ class DocumentSearchApp:
         except Exception as exc:
             self.output.insert(tk.END, f"Napaka pri iskanju:\n{exc}\n")
             return
+
+        messages = result.get("messages", [])
+        if messages:
+            self.output.insert(tk.END, "Sporočila:\n")
+            for msg in messages:
+                self.output.insert(tk.END, f"- {msg}\n")
+            self.output.insert(tk.END, "\n")
 
         rezultati = result.get("rezultati", [])
 
@@ -242,6 +220,9 @@ class DocumentSearchApp:
             datoteka = item.get("datoteka", "neznana datoteka")
             self.output.insert(tk.END, f"{i}. dokument #{indeks}: {datoteka}\n")
 
+        mapa_shranjevanja = result.get("mapa_za_shranjevanje")
+        if mapa_shranjevanja:
+            self.output.insert(tk.END, f"\nMatrike in podatki so shranjeni v:\n{mapa_shranjevanja}\n")
 
 def main() -> None:
     root = tk.Tk()

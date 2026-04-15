@@ -7,13 +7,6 @@ from . import svd
 from . import Q
 
 
-# mapa app/
-APP_MAPA = Path(__file__).resolve().parent.parent
-
-# mapa app/shranjeno/
-SHRANJENA_MAPA = APP_MAPA / "shranjeno"
-
-
 def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez):
     dokumenti = im.preberi_dokumente(Path(mapa))
 
@@ -41,7 +34,7 @@ def shrani_podatke(pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez):
     with open(pot_podatki, "wb") as f:
         pickle.dump(data, f)
 
-    # izračunamo SVD
+    # izračun SVD
     u, s, vt = svd.SVD(A)
     np.save(pot_U, u)
     np.save(pot_S, s)
@@ -62,42 +55,79 @@ def beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt):
     return G, A, U, S, Vt
 
 
+def matrike_obstajajo(pot_A, pot_podatki, pot_U, pot_S, pot_Vt, utez):
+    """
+    Vrne True, če v mapi že obstajajo vse potrebne datoteke za izbrano uteženost.
+    Za uteženo morata obstajati tudi G.npy in ustrezna uteženost v pickle datoteki.
+    """
+    if not (pot_A.exists() and pot_podatki.exists() and pot_U.exists() and pot_S.exists() and pot_Vt.exists()):
+        return False
+
+    try:
+        with open(pot_podatki, "rb") as f:
+            data = pickle.load(f)
+
+        shranjena_utezenost = data.get("utezenost", None)
+
+        if shranjena_utezenost != utez:
+            return False
+
+        if utez:
+            pot_G = pot_A.parent / "G.npy"
+            if not pot_G.exists():
+                return False
+
+    except Exception:
+        return False
+
+    return True
+
+
 def poisci_dokumente(
     mapa,
+    mapa_za_shranjevanje,
     utez,
     k,
     mejna_vrednost,
-    poizvedba,
-    prisili_ponovni_izracun=False
+    poizvedba
 ):
     """
-    Funkcija za GUI aplikacijo.
-    Vse pomožne matrike in ostali_podatki shrani v mapo app/shranjeno
+    Glavna funkcija za GUI.
+
+    mapa = mapa z .txt dokumenti
+    mapa_za_shranjevanje = kam shranimo / od koder beremo matrike
     """
 
     mapa = Path(mapa)
+    shramba = Path(mapa_za_shranjevanje)
 
     if not mapa.exists():
-        raise FileNotFoundError(f"Mapa ne obstaja: {mapa}")
+        raise FileNotFoundError(f"Mapa z dokumenti ne obstaja: {mapa}")
 
     if not mapa.is_dir():
         raise NotADirectoryError(f"Podana pot ni mapa: {mapa}")
 
-    # ustvarimo mapo za shranjevanje, če še ne obstaja
-    SHRANJENA_MAPA.mkdir(parents=True, exist_ok=True)
+    # ustvarimo mapo za shranjevanje
+    shramba.mkdir(parents=True, exist_ok=True)
 
-    pot_A = SHRANJENA_MAPA / "A.npy"
-    pot_G = SHRANJENA_MAPA / "G.npy"
-    pot_U = SHRANJENA_MAPA / "U.npy"
-    pot_S = SHRANJENA_MAPA / "S.npy"
-    pot_Vt = SHRANJENA_MAPA / "Vt.npy"
-    pot_podatki = SHRANJENA_MAPA / "ostali_podatki.pkl"
+    # poti do datotek
+    pot_A = shramba / "A.npy"
+    pot_G = shramba / "G.npy"
+    pot_U = shramba / "U.npy"
+    pot_S = shramba / "S.npy"
+    pot_Vt = shramba / "Vt.npy"
+    pot_podatki = shramba / "ostali_podatki.pkl"
 
-    # če še ni podatkov ali želimo prisilno ponovno računanje
-    if prisili_ponovni_izracun or not pot_podatki.exists():
+    sporocila = []
+
+    # Če matrike ne obstajajo, jih izračunamo.
+    if not matrike_obstajajo(pot_A, pot_podatki, pot_U, pot_S, pot_Vt, utez):
+        sporocila.append("Matrike niso bile najdene ali ne ustrezajo nastavitvam. Generiram nove matrike ...")
         shrani_podatke(
             pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez
         )
+    else:
+        sporocila.append("Obstoječe matrike so bile najdene. Uporabljam shranjene matrike ...")
 
     with open(pot_podatki, "rb") as f:
         data = pickle.load(f)
@@ -105,35 +135,25 @@ def poisci_dokumente(
     utezenost = data["utezenost"]
     slovar = data["slovar"]
 
-    # če uporabnik zamenja uteženost, ponovno zgradimo vse
-    if utezenost != utez:
-        shrani_podatke(
-            pot_A, pot_G, pot_podatki, pot_U, pot_S, pot_Vt, mapa, utez
-        )
-
-        with open(pot_podatki, "rb") as f:
-            data = pickle.load(f)
-
-        utezenost = data["utezenost"]
-        slovar = data["slovar"]
-
     G, A, u, s, vt = beri_matrike(pot_A, pot_G, pot_U, pot_S, pot_Vt)
 
+    # preverjanje parametrov
     if k <= 0:
         raise ValueError("Vrednost k mora biti večja od 0.")
 
     max_k = min(len(s), u.shape[1], vt.shape[0])
     if k > max_k:
-        raise ValueError(f"Vrednost k je prevelika. Največja dovoljena vrednost je {max_k}.")
+        raise ValueError(f"k je prevelik (max = {max_k})")
 
     if not (0 <= mejna_vrednost <= 1):
-        raise ValueError("Mejna vrednost kosinusa mora biti med 0 in 1.")
+        raise ValueError("Meja kosinusa mora biti med 0 in 1.")
 
     # odrezani SVD
     U = u[:, :k]
     Vt = vt[:k, :]
     S = np.diag(s[:k])
 
+    # poizvedba
     q = Q.zgradiVektorPoizvedbe(poizvedba, slovar, utezenost, G)
     q = Q.zgradiVektorDokumentov(q, U, S)
 
@@ -141,16 +161,22 @@ def poisci_dokumente(
 
     iskani = Q.najdiDokumente(q, V, mejna_vrednost)
 
+    # imena datotek
     datoteke = sorted([p.name for p in mapa.glob("*.txt")])
 
     rezultati = []
     for idx in iskani:
+        idx_int = int(idx)
+
         zapis = {
-            "indeks": int(idx)
+            "indeks": idx_int
         }
 
-        if 0 <= int(idx) < len(datoteke):
-            zapis["datoteka"] = datoteke[int(idx)]
+        # Q.najdiDokumente vrača indekse od 1 naprej
+        seznam_index = idx_int - 1
+
+        if 0 <= seznam_index < len(datoteke):
+            zapis["datoteka"] = datoteke[seznam_index]
         else:
             zapis["datoteka"] = None
 
@@ -163,5 +189,6 @@ def poisci_dokumente(
         "k": k,
         "mejna_vrednost": mejna_vrednost,
         "poizvedba": poizvedba,
-        "mapa_za_shranjevanje": str(SHRANJENA_MAPA)
+        "mapa_za_shranjevanje": str(shramba),
+        "messages": sporocila
     }

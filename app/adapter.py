@@ -6,16 +6,12 @@ from pathlib import Path
 from projekt.mainApp import poisci_dokumente
 
 
-def run_search(folder_path, weighted, has_existing_matrices, matrix_paths, k, cosine_threshold, query):
-    # A, S in G zaenkrat ignoriramo
-
-    rezultat = poisci_dokumente(
+def run_search(folder_path, save_folder, weighted, k, cosine_threshold, query):
+    return poisci_dokumente(
         mapa=folder_path,
+        mapa_za_shranjevanje=save_folder,
         utez=weighted,
         k=int(k),
         mejna_vrednost=float(cosine_threshold),
         poizvedba=query,
-        prisili_ponovni_izracun=False
     )
-
-    return rezultat
