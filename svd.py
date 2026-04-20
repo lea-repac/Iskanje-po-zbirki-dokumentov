@@ -9,7 +9,7 @@ vrne razcep matrike A na U, S in V
 """
 def SVD(A):
     #dobimo osnoven svd - 
-    u, s, v = np.linalg.svd(A)
+    u, s, v = np.linalg.svd(A, full_matrices=False)
    
     """
     print("U: ")
